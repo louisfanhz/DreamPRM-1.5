@@ -144,7 +144,8 @@ class MyDataset(Dataset):
                 conv_template.append_message(conv_template.roles[1], part['value'])
         prompt = conv_template.get_prompt()
         # image = load_image(inputs['image'], max_num=self.max_patch_num).to(torch.bfloat16).cuda()
-        image_path = "./data/CharXiv_images" + inputs['image'][8:]
+        if inputs['image'].startswith("data"):
+            image_path = "../content/drive/MyDrive/llm_reasoning/visual_prm_data/images/" + inputs['image'][5:]
         image = load_image(image_path, max_num=self.max_patch_num).to(torch.bfloat16).cuda()
         id = str(inputs['id'])
 
