@@ -145,7 +145,7 @@ class MyDataset(Dataset):
         prompt = conv_template.get_prompt()
         # image = load_image(inputs['image'], max_num=self.max_patch_num).to(torch.bfloat16).cuda()
         if inputs['image'].startswith("data"):
-            image_path = "../content/drive/MyDrive/llm_reasoning/visual_prm_data/images/" + inputs['image'][5:]
+            image_path = "../drive/MyDrive/llm_reasoning/visual_prm_data/images/" + inputs['image'][5:]
         image = load_image(image_path, max_num=self.max_patch_num).to(torch.bfloat16).cuda()
         id = str(inputs['id'])
 
