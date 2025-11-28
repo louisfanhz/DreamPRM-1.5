@@ -72,6 +72,57 @@ def resize_image_if_needed(img, max_size=512):
 
 
 
+# class MyDataset(Dataset):
+#     def __init__(self, data_js, max_patch_num,):
+#         self.data_js = data_js
+#         self.template = 'internvl2_5'
+#         self.max_patch_num = max_patch_num
+
+#     def __len__(self):
+#         return len(self.data_js)
+
+#     def __getitem__(self, idx):
+#         inputs = self.data_js[idx]
+#         conv_template = get_conv_template(self.template)
+#         for part in inputs['conversations']:
+#             if part['from'] == 'system':
+#                 conv_template.system_message = part['value']
+#             elif part['from'] == 'human':
+#                 conv_template.append_message(conv_template.roles[0], part['value'])
+#             elif part['from'] == 'gpt':
+#                 conv_template.append_message(conv_template.roles[1], part['value'])
+#         prompt = conv_template.get_prompt()
+#         image = load_image(inputs['image'], max_num=self.max_patch_num).to(torch.bfloat16).cuda()
+#         id = str(inputs['id'])
+
+#         return prompt, image, id
+
+# class MyMetaDataset(Dataset):
+#     def __init__(self, data_js, max_patch_num):
+#         self.data_js = data_js
+#         self.template = 'internvl2_5'
+#         self.max_patch_num = max_patch_num
+
+#     def __len__(self):
+#         return len(self.data_js)
+
+#     def __getitem__(self, idx):
+#         inputs = self.data_js[idx]
+#         conv_template = get_conv_template(self.template)
+#         for part in inputs['conversations']:
+#             if part['from'] == 'system':
+#                 conv_template.system_message = part['value']
+#             elif part['from'] == 'human':
+#                 conv_template.append_message(conv_template.roles[0], part['value'])
+#             elif part['from'] == 'gpt':
+#                 conv_template.append_message(conv_template.roles[1], part['value'])
+#         prompt = conv_template.get_prompt()
+#         image = load_image(inputs['image'][1:], max_num=self.max_patch_num).to(torch.bfloat16).cuda()
+#         label = torch.tensor(inputs["true_false"]).to(torch.bfloat16).cuda()
+
+#         return prompt, image, label
+
+
 class MyDataset(Dataset):
     def __init__(self, data_js, max_patch_num,):
         self.data_js = data_js
@@ -92,11 +143,12 @@ class MyDataset(Dataset):
             elif part['from'] == 'gpt':
                 conv_template.append_message(conv_template.roles[1], part['value'])
         prompt = conv_template.get_prompt()
-        image = load_image(inputs['image'], max_num=self.max_patch_num).to(torch.bfloat16).cuda()
+        # image = load_image(inputs['image'], max_num=self.max_patch_num).to(torch.bfloat16).cuda()
+        image_path = "./data/CharXiv_images" + inputs['image'][8:]
+        image = load_image(image_path, max_num=self.max_patch_num).to(torch.bfloat16).cuda()
         id = str(inputs['id'])
 
         return prompt, image, id
-
 
 class MyMetaDataset(Dataset):
     def __init__(self, data_js, max_patch_num):
@@ -107,8 +159,17 @@ class MyMetaDataset(Dataset):
     def __len__(self):
         return len(self.data_js)
 
+    def _only_get_item_with_id(self, inputs, id):
+        for item in inputs:
+            if item['id'] == id:
+                return item
+        raise ValueError(f"Item with id {id} not found")
+
     def __getitem__(self, idx):
         inputs = self.data_js[idx]
+        # rprint(inputs)
+        # inputs = self._only_get_item_with_id(self.data_js, 2193)
+
         conv_template = get_conv_template(self.template)
         for part in inputs['conversations']:
             if part['from'] == 'system':
@@ -118,7 +179,11 @@ class MyMetaDataset(Dataset):
             elif part['from'] == 'gpt':
                 conv_template.append_message(conv_template.roles[1], part['value'])
         prompt = conv_template.get_prompt()
-        image = load_image(inputs['image'][1:], max_num=self.max_patch_num).to(torch.bfloat16).cuda()
+        if inputs['image'].startswith("./"):
+            image = "./data/CharXiv_images" + inputs['image'][8:]
+        else:
+            image = inputs['image'][1:]
+        image = load_image(image, max_num=self.max_patch_num).to(torch.bfloat16).cuda()
         label = torch.tensor(inputs["true_false"]).to(torch.bfloat16).cuda()
 
         return prompt, image, label
