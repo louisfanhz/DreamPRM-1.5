@@ -183,7 +183,8 @@ class MyMetaDataset(Dataset):
         if inputs['image'].startswith("./"):
             image = "./data/CharXiv_images" + inputs['image'][8:]
         else:
-            image = inputs['image'][1:]
+            # image = inputs['image'][1:]
+            image = "../drive/MyDrive/llm_reasoning/mmmu_pro_images/standard_4_options_only_first_image/" + inputs['image'][20:]
         image = load_image(image, max_num=self.max_patch_num).to(torch.bfloat16).cuda()
         label = torch.tensor(inputs["true_false"]).to(torch.bfloat16).cuda()
 
