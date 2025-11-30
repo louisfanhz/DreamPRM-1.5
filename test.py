@@ -1,3 +1,4 @@
+import json
 from transformers import AutoModel, AutoTokenizer
 from data import build_test_dataloader
 import torch
@@ -5,27 +6,36 @@ from utils import select_best_answer
 from tqdm import tqdm
 
 
-test_dataloader = build_test_dataloader(test_json_file = "./data/test_MMMU_8cots.json")
+def print_data(json_file):
+    with open(json_file, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+    print(len(data))
 
-MODEL_PATH = "./weights"
-model = AutoModel.from_pretrained(
-            MODEL_PATH,
-            trust_remote_code=True,
-            low_cpu_mem_usage=True,
-            torch_dtype=torch.bfloat16,
-            use_flash_attn=False,
-        ).cuda()
-tokenizer = AutoTokenizer.from_pretrained("OpenGVLab/InternVL3-1B", trust_remote_code=True, use_fast=False)
+def run_prm():
+    test_dataloader = build_test_dataloader(test_json_file = "./data/test_MMMU_8cots.json")
 
-correct = 0
-total = 0
+    MODEL_PATH = "./weights"
+    model = AutoModel.from_pretrained(
+                MODEL_PATH,
+                trust_remote_code=True,
+                low_cpu_mem_usage=True,
+                torch_dtype=torch.bfloat16,
+                use_flash_attn=False,
+            ).cuda()
+    tokenizer = AutoTokenizer.from_pretrained("OpenGVLab/InternVL3-1B", trust_remote_code=True, use_fast=False)
 
-for inputs in tqdm(test_dataloader):
-    # input_test_data_format:
-    # {"question": question, "image_path": image_path, "candidate":[1, 2, 3, 4], "true_false":[True, False, True, False]}
-    with torch.no_grad():
-        true_false, best_index = select_best_answer(model, tokenizer, inputs, 'mean')
-        correct += int(true_false)
-    total += 1
-acc = correct / total
-print(acc)
+    correct = 0
+    total = 0
+
+    for inputs in tqdm(test_dataloader):
+        # input_test_data_format:
+        # {"question": question, "image_path": image_path, "candidate":[1, 2, 3, 4], "true_false":[True, False, True, False]}
+        with torch.no_grad():
+            true_false, best_index = select_best_answer(model, tokenizer, inputs, 'mean')
+            correct += int(true_false)
+        total += 1
+    acc = correct / total
+    print(acc)
+
+if __name__ == "__main__":
+    print_data("./data/meta_MMMU_Pro.json")

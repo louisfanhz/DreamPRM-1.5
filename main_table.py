@@ -48,7 +48,7 @@ parser.add_argument("--batch_size", type=int, default=1)
 parser.add_argument("--scheduler_step_size", type=int, default=1000)
 parser.add_argument("--scheduler_gamma", type=float, default=0.95)
 # higher-level optimization hyperparameters
-parser.add_argument("--meta_lr", type=float, default=1e-1)
+parser.add_argument("--meta_lr", type=float, default=5e-3)
 parser.add_argument("--meta_momentum", type=float, default=0.9)
 parser.add_argument("--meta_weight_decay", type=float, default=1e-3)
 parser.add_argument("--meta_batch_size", type=int, default=1)
