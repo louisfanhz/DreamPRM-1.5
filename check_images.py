@@ -130,12 +130,13 @@ def remove_missing_entries(json_path, image_base_dir, output_path):
 if __name__ == "__main__":
     # Configuration
     meta_file = "data/meta_MMMU_Pro.json"
-    json_file = "data/train_small.json"
+    json_file = "data/train_large.json"
     image_directory = "../visualPRM_data/images/"
     output_file = "data/train_small_cleaned.json"
 
-    with open(meta_file, 'r', encoding='utf-8') as f:
+    with open(json_file, 'r', encoding='utf-8') as f:
         data = json.load(f)
+    rprint(len(data))
     for item in data:
         if item['id'] == "test_Geography_298":
             rprint(item)

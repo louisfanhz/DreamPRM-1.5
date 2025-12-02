@@ -133,13 +133,15 @@ class Upper(ImplicitProblem):
         print(prediction.item(), label.item(), loss.item())
         print(max(self.module.raw_weights))
         print(min(self.module.raw_weights))
-    # torch.cuda.empty_cache()
+    
         if len(upper_loss) == len(meta_dataloader):
             torch.cuda.empty_cache()
             torch.cuda.reset_peak_memory_stats()
             mean_outer_loss = np.mean(upper_loss)
             wandb.log({"outer_loss": mean_outer_loss})
             upper_loss.clear()
+
+        torch.cuda.empty_cache()
 
         return {"loss": loss}
 
