@@ -1,6 +1,7 @@
 import json
 import os
 from collections import defaultdict
+from rich import print as rprint
 
 def check_images_exist(json_path, image_base_dir):
     """
@@ -128,11 +129,19 @@ def remove_missing_entries(json_path, image_base_dir, output_path):
 
 if __name__ == "__main__":
     # Configuration
+    meta_file = "data/meta_MMMU_Pro.json"
     json_file = "data/train_small.json"
     image_directory = "../visualPRM_data/images/"
     output_file = "data/train_small_cleaned.json"
+
+    with open(meta_file, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+    for item in data:
+        if item['id'] == "test_Geography_298":
+            rprint(item)
+    # rprint(data[4])
     
-    results = check_images_exist(json_file, image_directory)
+    # results = check_images_exist(json_file, image_directory)
     
-    clean_results = remove_missing_entries(json_file, image_directory, output_file)
+    # clean_results = remove_missing_entries(json_file, image_directory, output_file)
 
