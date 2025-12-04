@@ -23,7 +23,7 @@ cp.checkpoint = partial(cp.checkpoint, use_reentrant=False)
 
 parser = argparse.ArgumentParser(description="DreamPRM-1.5")
 # data file path and model path
-parser.add_argument('--train_json_file', type=str, default="./data/train.json")
+parser.add_argument('--train_json_file', type=str, default="./data/cold_start.json")
 # parser.add_argument('--train_json_file', type=str, default="./data/train_small_cleaned.json")
 # parser.add_argument('--train_json_file', type=str, default="./data/training_data_prm_combined.json")
 # parser.add_argument('--meta_json_file', type=str, default="./data/meta.json")
@@ -32,7 +32,7 @@ parser.add_argument('--weights_path', type=str, default="./weights")
 parser.add_argument("--reward_model", type=str, default="OpenGVLab/InternVL3-1B")
 # bi-level optimization configuration
 parser.add_argument("--iteration_num", type=int, default=100000)
-parser.add_argument("--save_every_iterations", type=int, default=10)
+parser.add_argument("--save_every_iterations", type=int, default=100)
 parser.add_argument("--unroll_steps", type=int, default=1)
 parser.add_argument("--gradiant_accumulation", type=int, default=1)
 parser.add_argument("--gradiant_clipping", type=float, default=1.0)
@@ -95,7 +95,7 @@ resume_labels = None
     meta_batch_size= args.batch_size,
     max_patch_num = args.max_patch_num,
 )
-wandb.init(project="DreamPRM-1.5")
+wandb.init(project="DreamPRM-1.5-cold-start")
 
 device = torch.device(args.device)
 criterion = nn.CrossEntropyLoss()
