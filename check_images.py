@@ -1,3 +1,4 @@
+import sys
 import json
 import os
 from collections import defaultdict
@@ -130,17 +131,28 @@ def remove_missing_entries(json_path, image_base_dir, output_path):
 if __name__ == "__main__":
     # Configuration
     meta_file = "data/meta_MMMU_Pro.json"
-    json_file = "data/train_large.json"
+    json_file = "data/train.json"
     image_directory = "../visualPRM_data/images/"
     output_file = "data/train_small_cleaned.json"
+    cold_start = "../DreamPRM-1.5_data/cold_start.json"
 
-    with open(json_file, 'r', encoding='utf-8') as f:
+    with open(meta_file, 'r', encoding='utf-8') as f:
         data = json.load(f)
     rprint(len(data))
+
+    all_unique_ids = set()
     for item in data:
-        if item['id'] == "test_Geography_298":
-            rprint(item)
-    # rprint(data[4])
+        # if item['id'] == "test_Agriculture_195":
+        #     rprint(item)
+        all_unique_ids.add(item['id'])
+    rprint(len(all_unique_ids))
+    
+    with open(cold_start, 'r', encoding='utf-8') as f:
+        cold_start_data = json.load(f)
+    rprint(len(cold_start_data))
+    with open(json_file, 'r', encoding='utf-8') as f:
+        train_data = json.load(f)
+    rprint(len(train_data))
     
     # results = check_images_exist(json_file, image_directory)
     

@@ -133,7 +133,7 @@ class Upper(ImplicitProblem):
         print(prediction.item(), label.item(), loss.item())
         print(max(self.module.raw_weights))
         print(min(self.module.raw_weights))
-    
+
         if len(upper_loss) == len(meta_dataloader):
             torch.cuda.empty_cache()
             torch.cuda.reset_peak_memory_stats()

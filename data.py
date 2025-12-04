@@ -1,4 +1,5 @@
-from torch.utils.data import DataLoader, Dataset, RandomSampler, SequentialSampler
+from torch.utils.data import DataLoader, Dataset, RandomSampler, SequentialSampler, random_split
+
 import json
 from transformers import AutoProcessor
 from PIL import Image
@@ -145,7 +146,7 @@ class MyDataset(Dataset):
         prompt = conv_template.get_prompt()
         # image = load_image(inputs['image'], max_num=self.max_patch_num).to(torch.bfloat16).cuda()
         if inputs['image'].startswith("data"):
-            image_path = "../drive/MyDrive/llm_reasoning/visual_prm_data/images/" + inputs['image'][5:]
+            image_path = "../drive/MyDrive/llm_reasoning/visual_prm_data/" + inputs['image'][5:]
         image = load_image(image_path, max_num=self.max_patch_num).to(torch.bfloat16).cuda()
         id = str(inputs['id'])
 
@@ -184,7 +185,7 @@ class MyMetaDataset(Dataset):
             image = "./data/CharXiv_images" + inputs['image'][8:]
         else:
             # image = inputs['image'][1:]
-            image = "../drive/MyDrive/llm_reasoning/mmmu_pro_images/standard_4_options_only_first_image/" + inputs['image'][20:]
+            image = "../drive/MyDrive/llm_reasoning/mmmu_pro_images/standard_4_options/" + inputs['image'][20:]
         image = load_image(image, max_num=self.max_patch_num).to(torch.bfloat16).cuda()
         label = torch.tensor(inputs["true_false"]).to(torch.bfloat16).cuda()
 
@@ -219,8 +220,19 @@ def build_dataloader(
 
 def build_test_dataloader(
         test_json_file,
+        return_subset=False,
 ):
     test_dataset = MyTestDataset(read_json(test_json_file))
-    test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=True)
+    
+    if return_subset:
+        size = len(test_dataset) * 0.2
+        bigset, smallset = random_split(
+            test_dataset,
+            [len(test_dataset) - size, size],
+            # generator=torch.Generator().manual_seed(42)
+        )
+        test_dataloader = DataLoader(smallset, batch_size=1, shuffle=True)
+        return test_dataloader
 
+    test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=True)
     return test_dataloader
