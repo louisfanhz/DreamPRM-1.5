@@ -15,6 +15,8 @@ import torch
 import torch.utils.checkpoint as cp
 from functools import partial
 from transformers import get_cosine_schedule_with_warmup
+from tqdm import tqdm
+
 
 cp.checkpoint = partial(cp.checkpoint, use_reentrant=False)
 
@@ -218,7 +220,7 @@ class ReweightingEngine(Engine):
         model = self.lower.module
 
         # Go through the testing data set for validation
-        for inputs in test_dataloader:
+        for inputs in tqdm(test_dataloader):
             # input_test_data_format:
             # {"question": question, "image_path": image_path, "candidates":[...], "true_false":[True, False, ...]}
             true_false, best_index = select_best_answer(
