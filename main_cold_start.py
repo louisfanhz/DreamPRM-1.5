@@ -158,8 +158,7 @@ class Lower(ImplicitProblem):
 
     def configure_module(self):
         model = AutoModel.from_pretrained(
-            # MODEL_PATH,
-            "./weights/",
+            MODEL_PATH,
             trust_remote_code=True,
             low_cpu_mem_usage=True,
             torch_dtype=torch.bfloat16,
