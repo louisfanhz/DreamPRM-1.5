@@ -207,6 +207,7 @@ class ReweightingEngine(Engine):
 
     @torch.no_grad()
     def validation(self):
+        print(f"Starting validation...")
         torch.cuda.empty_cache()
         test_dataloader = build_test_dataloader(test_json_file="./data/test_MMMU_8cots.json", return_subset=True)
 
@@ -230,6 +231,7 @@ class ReweightingEngine(Engine):
         acc = correct / total * 100
 
         if best_acc < acc:
+            print(f"NEW BEST ACC: {acc}")
             best_acc = acc
             self.lower.module.save_pretrained(args.weights_path)
 
