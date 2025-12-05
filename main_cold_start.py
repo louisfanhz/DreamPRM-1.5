@@ -231,10 +231,11 @@ class ReweightingEngine(Engine):
 
         acc = correct / total * 100
 
-        if best_acc < acc:
-            print(f"NEW BEST ACC: {acc}")
-            best_acc = acc
-            self.lower.module.save_pretrained(args.weights_path)
+        # if best_acc < acc:
+        #     print(f"NEW BEST ACC: {acc}")
+        #     best_acc = acc
+        print(f"ACCURACY MMMU: {acc}")
+        self.lower.module.save_pretrained(args.weights_path)
 
         # Log to wandb
         wandb.log({"val_acc": acc, "best_acc": best_acc})
