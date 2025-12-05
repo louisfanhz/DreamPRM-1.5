@@ -31,7 +31,7 @@ parser.add_argument('--meta_json_file', type=str, default="./data/meta_MMMU_Pro.
 parser.add_argument('--weights_path', type=str, default="./weights")
 parser.add_argument("--reward_model", type=str, default="OpenGVLab/InternVL3-1B")
 # bi-level optimization configuration
-parser.add_argument("--iteration_num", type=int, default=100000)
+parser.add_argument("--iteration_num", type=int, default=100001)
 parser.add_argument("--save_every_iterations", type=int, default=100)
 parser.add_argument("--unroll_steps", type=int, default=1)
 parser.add_argument("--gradiant_accumulation", type=int, default=1)
