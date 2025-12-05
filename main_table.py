@@ -22,7 +22,7 @@ cp.checkpoint = partial(cp.checkpoint, use_reentrant=False)
 parser = argparse.ArgumentParser(description="DreamPRM-1.5")
 # data file path and model path
 # parser.add_argument('--train_json_file', type=str, default="./data/train.json")
-parser.add_argument('--train_json_file', type=str, default="./data/train.json")
+parser.add_argument('--train_json_file', type=str, default="./data/train_with_CharXiv.json")
 # parser.add_argument('--train_json_file', type=str, default="./data/training_data_prm_combined.json")
 # parser.add_argument('--meta_json_file', type=str, default="./data/meta.json")
 parser.add_argument('--meta_json_file', type=str, default="./data/meta_MMMU_Pro.json")
@@ -311,7 +311,10 @@ class ReweightingEngine(Engine):
         if best_acc < acc:
             print(f"NEW BEST ACC: {acc}")
             best_acc = acc
-            self.lower.module.save_pretrained(args.weights_path)
+            self.lower.module.save_pretrained("../drive/MyDrive/llm_reasoning/weights/best-weights")
+        else:
+            self.lower.module.save_pretrained("../drive/MyDrive/llm_reasoning/weights/last-weights")
+        print(f"ACCURACY MMMU: {acc}")
 
         ### test on CharXiv ###
         charxiv_correct = 0
