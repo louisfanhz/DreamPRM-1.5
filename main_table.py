@@ -30,7 +30,7 @@ parser.add_argument('--weights_path', type=str, default="./weights")
 parser.add_argument("--reward_model", type=str, default="OpenGVLab/InternVL3-1B")
 # bi-level optimization configuration
 parser.add_argument("--iteration_num", type=int, default=100000)
-parser.add_argument("--save_every_iterations", type=int, default=500)
+parser.add_argument("--save_every_iterations", type=int, default=1000)
 parser.add_argument("--unroll_steps", type=int, default=1)
 parser.add_argument("--gradiant_accumulation", type=int, default=1)
 parser.add_argument("--gradiant_clipping", type=float, default=1.0)
@@ -135,8 +135,8 @@ class Upper(ImplicitProblem):
         # print(prediction.item(), label.item(), loss.item())
         # print(max(self.module.raw_weights))
         # print(min(self.module.raw_weights))
-        # print(f"Step {len(upper_loss)}: Max weight: {max(self.module.raw_weights)}, Min weight: {min(self.module.raw_weights)}")
-
+        if len(upper_loss) % 10 == 0:
+            print(f"Upper Max weight: {max(self.module.raw_weights)}, Min weight: {min(self.module.raw_weights)}")
         if len(upper_loss) == len(meta_dataloader):
             torch.cuda.empty_cache()
             torch.cuda.reset_peak_memory_stats()
