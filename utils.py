@@ -15,6 +15,7 @@ from enum import IntEnum, auto
 from typing import Dict, List, Tuple, Union
 import json
 import re
+from rich import print as rprint
 
 
 def set_cudnn(device="cuda"):
@@ -831,10 +832,48 @@ def build_conversations(question: str, steps: List[str]) -> List[Dict]:
     return conv
 
 
+def charxiv_split_reasoning_steps(raw_string: str) -> List[str]:
+    # Clean the input string
+    raw_string = raw_string.strip()
+        
+    # Check if there's an "Answer:" section
+    answer_pattern = r'\nAnswer:'
+    if re.search(answer_pattern, raw_string):
+        parts = re.split(answer_pattern, raw_string)
+        main_content = parts[0]
+        answer_content = parts[1] if len(parts) > 1 else ""
+    else:
+        main_content = raw_string
+        answer_content = ""
+    
+    # Split the main content by step markers, capturing both the full match and the step number
+    step_parts = re.split(r'Step\s+\d+:', main_content, flags=re.IGNORECASE)
+    # rprint("="*100)
+    # for r in step_parts:
+    #     rprint(r)
+    #     rprint("-"*100)
+    if not main_content.strip().lower().startswith("step") or not step_parts[0].strip():
+        step_parts = step_parts[1:]    
+    
+    # Combine step numbers with their content
+    steps = []
+    for i, content in enumerate(step_parts):
+        # Format as "X." instead of "Step X:"
+        step = f"{i+1}. {content.strip()}"
+        steps.append(step)
+    
+    # Add the answer as a separate step if it exists
+    if answer_content.strip():
+        steps.append(f"Final answer: {answer_content.strip()}")
+    return steps
+
+
+
 def select_best_answer(model, tokenizer, inputs, agg_fuc):
     # Todo: support batch inference
     pixel_values = load_image(inputs['image_path'][0], max_num=12).to(torch.bfloat16).cuda()
     question = inputs['question'][0]
+    image_path = inputs['image_path'][0]
     index = 0
     max_score = 0
     true_false = False
@@ -843,7 +882,10 @@ def select_best_answer(model, tokenizer, inputs, agg_fuc):
         m_reason = re.search(r"\[Reasoning\](.*?)(?=\n?Answer:)", i[0], re.S)
         reasoning = m_reason.group(1) if m_reason else i[0]
         m_ans = re.search(r"Answer:\s*(.*)", i[0], re.S)
-        steps = split_reasoning_block(reasoning)
+        if "CharXiv" in image_path:
+            steps = charxiv_split_reasoning_steps(reasoning)
+        else:
+            steps = split_reasoning_block(reasoning)
         answer = m_ans.group(1).strip() if m_ans else ""
         if answer:
             steps.append(f"Answer: {answer}")

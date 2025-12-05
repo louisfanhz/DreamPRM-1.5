@@ -235,5 +235,5 @@ def build_test_dataloader(
         test_dataloader = DataLoader(smallset, batch_size=1, shuffle=True)
         return test_dataloader
 
-    test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=True)
+    test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=False)
     return test_dataloader

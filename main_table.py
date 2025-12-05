@@ -287,6 +287,7 @@ class ReweightingEngine(Engine):
         print(f"Starting validation...")
         torch.cuda.empty_cache()
         test_mmmu_dataloader = build_test_dataloader(test_json_file="./data/test_MMMU_8cots.json", return_subset=True)
+        test_charxiv_dataloader = build_test_dataloader(test_json_file="./data/test-gemini-3-pro-preview-CharXiv-reasoning-results-dreamprm.json", return_subset=True)
 
         correct = 0
         total = 0
@@ -296,7 +297,7 @@ class ReweightingEngine(Engine):
         model = self.lower.module
 
         # Go through the testing data set for validation
-        for inputs in tqdm(test_dataloader):
+        for inputs in tqdm(test_mmmu_dataloader, desc="Testing MMMU"):
             # input_test_data_format:
             # {"question": question, "image_path": image_path, "candidates":[...], "true_false":[True, False, ...]}
             true_false, best_index = select_best_answer(
@@ -312,8 +313,20 @@ class ReweightingEngine(Engine):
             best_acc = acc
             self.lower.module.save_pretrained(args.weights_path)
 
+        ### test on CharXiv ###
+        charxiv_correct = 0
+        charxiv_total = 0
+        model = self.lower.module
+        for inputs in tqdm(test_charxiv_dataloader, desc="Testing CharXiv"):
+            true_false, best_index = select_best_answer(
+                model, tokenizer, inputs, args.aggregation_function
+            )
+            charxiv_correct += int(true_false)
+            charxiv_total += 1
+        charxiv_acc = charxiv_correct / charxiv_total * 100
+
         # Log to wandb
-        wandb.log({"val_acc": acc, "best_acc": best_acc})
+        wandb.log({"val_acc": acc, "best_acc": best_acc, "charxiv_acc": charxiv_acc})
 
         torch.cuda.empty_cache()
         torch.cuda.reset_peak_memory_stats()
