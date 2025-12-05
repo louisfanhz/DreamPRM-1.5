@@ -104,7 +104,7 @@ upper_loss = []
 best_loss = 1000
 best_acc = 0
 MODEL_PATH = args.reward_model
-WEIGHTS_PATH = args.weights_path
+WEIGHTS_PATH = "../drive/MyDrive/llm_reasoning/weights/last-cold-start-weights"
 tokenizer = AutoTokenizer.from_pretrained("OpenGVLab/InternVL3-1B", trust_remote_code=True, use_fast=False)
 
 
@@ -138,13 +138,13 @@ class Upper(ImplicitProblem):
         if len(upper_loss) % 10 == 0:
             print(f"Upper Max weight: {max(self.module.raw_weights)}, Min weight: {min(self.module.raw_weights)}")
         if len(upper_loss) == len(meta_dataloader):
-            torch.cuda.empty_cache()
-            torch.cuda.reset_peak_memory_stats()
             mean_outer_loss = np.mean(upper_loss)
             wandb.log({"outer_loss": mean_outer_loss})
             wandb.log({"weight_mean": np.mean(self.module.raw_weights), "weight_std": np.std(self.module.raw_weights)})
             wandb.log({"weight_max": max(self.module.raw_weights), "weight_min": min(self.module.raw_weights)})
             upper_loss.clear()
+            torch.cuda.empty_cache()
+            torch.cuda.reset_peak_memory_stats()
 
         torch.cuda.empty_cache()
 
@@ -218,14 +218,14 @@ class Lower(ImplicitProblem):
         lower_loss.append(loss.item())
         lower_weighted_loss.append(weighted_loss.item())
         if len(lower_loss) == len(train_dataloader):
-            torch.cuda.empty_cache()
-            torch.cuda.reset_peak_memory_stats()
             mean_inner_loss = np.mean(lower_loss)
             mean_inner_weighted_loss = np.mean(lower_weighted_loss)
             wandb.log({"inner_loss": mean_inner_loss,
                        "inner_weighted_loss": mean_inner_weighted_loss, })
             lower_loss.clear()
             lower_weighted_loss.clear()
+            torch.cuda.empty_cache()
+            torch.cuda.reset_peak_memory_stats()
         # torch.cuda.empty_cache()
 
         return weighted_loss
