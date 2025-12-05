@@ -150,6 +150,9 @@ if __name__ == "__main__":
     with open(cold_start, 'r', encoding='utf-8') as f:
         cold_start_data = json.load(f)
     rprint(len(cold_start_data))
+    with open(meta_file, 'r', encoding='utf-8') as f:
+        meta_data = json.load(f)
+    rprint(len(meta_data))
     with open(json_file, 'r', encoding='utf-8') as f:
         train_data = json.load(f)
     rprint(len(train_data))

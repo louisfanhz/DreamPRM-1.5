@@ -14,6 +14,7 @@ import torch
 import torch.utils.checkpoint as cp
 from functools import partial
 from transformers import get_cosine_schedule_with_warmup
+from tqdm import tqdm
 
 cp.checkpoint = partial(cp.checkpoint, use_reentrant=False)
 
@@ -21,7 +22,7 @@ cp.checkpoint = partial(cp.checkpoint, use_reentrant=False)
 parser = argparse.ArgumentParser(description="DreamPRM-1.5")
 # data file path and model path
 # parser.add_argument('--train_json_file', type=str, default="./data/train.json")
-parser.add_argument('--train_json_file', type=str, default="./data/train_small_cleaned.json")
+parser.add_argument('--train_json_file', type=str, default="./data/train.json")
 # parser.add_argument('--train_json_file', type=str, default="./data/training_data_prm_combined.json")
 # parser.add_argument('--meta_json_file', type=str, default="./data/meta.json")
 parser.add_argument('--meta_json_file', type=str, default="./data/meta_MMMU_Pro.json")
@@ -29,7 +30,7 @@ parser.add_argument('--weights_path', type=str, default="./weights")
 parser.add_argument("--reward_model", type=str, default="OpenGVLab/InternVL3-1B")
 # bi-level optimization configuration
 parser.add_argument("--iteration_num", type=int, default=100000)
-parser.add_argument("--save_every_iterations", type=int, default=1)
+parser.add_argument("--save_every_iterations", type=int, default=500)
 parser.add_argument("--unroll_steps", type=int, default=1)
 parser.add_argument("--gradiant_accumulation", type=int, default=1)
 parser.add_argument("--gradiant_clipping", type=float, default=1.0)
@@ -103,6 +104,7 @@ upper_loss = []
 best_loss = 1000
 best_acc = 0
 MODEL_PATH = args.reward_model
+WEIGHTS_PATH = args.weights_path
 tokenizer = AutoTokenizer.from_pretrained("OpenGVLab/InternVL3-1B", trust_remote_code=True, use_fast=False)
 
 
@@ -130,15 +132,18 @@ class Upper(ImplicitProblem):
         else:
             assert "loss target should be '+' or 'both'"
         upper_loss.append(loss.item())
-        print(prediction.item(), label.item(), loss.item())
-        print(max(self.module.raw_weights))
-        print(min(self.module.raw_weights))
+        # print(prediction.item(), label.item(), loss.item())
+        # print(max(self.module.raw_weights))
+        # print(min(self.module.raw_weights))
+        # print(f"Step {len(upper_loss)}: Max weight: {max(self.module.raw_weights)}, Min weight: {min(self.module.raw_weights)}")
 
         if len(upper_loss) == len(meta_dataloader):
             torch.cuda.empty_cache()
             torch.cuda.reset_peak_memory_stats()
             mean_outer_loss = np.mean(upper_loss)
             wandb.log({"outer_loss": mean_outer_loss})
+            wandb.log({"weight_mean": np.mean(self.module.raw_weights), "weight_std": np.std(self.module.raw_weights)})
+            wandb.log({"weight_max": max(self.module.raw_weights), "weight_min": min(self.module.raw_weights)})
             upper_loss.clear()
 
         torch.cuda.empty_cache()
@@ -230,7 +235,8 @@ class Lower(ImplicitProblem):
 
     def configure_module(self):
         model = AutoModel.from_pretrained(
-            MODEL_PATH,
+            # MODEL_PATH,
+            WEIGHTS_PATH,
             trust_remote_code=True,
             low_cpu_mem_usage=True,
             torch_dtype=torch.bfloat16,
@@ -268,12 +274,49 @@ class Lower(ImplicitProblem):
 
 
 class ReweightingEngine(Engine):
+    # @torch.no_grad()
+    # def validation(self):
+    #     # save checkpoints
+    #     torch.cuda.empty_cache()
+    #     torch.cuda.reset_peak_memory_stats()
+    #     self.lower.module.save_pretrained(args.weights_path)
+    #     return torch.tensor(0.0, device=args.device)
+
     @torch.no_grad()
     def validation(self):
-        # save checkpoints
+        print(f"Starting validation...")
+        torch.cuda.empty_cache()
+        test_mmmu_dataloader = build_test_dataloader(test_json_file="./data/test_MMMU_8cots.json", return_subset=True)
+
+        correct = 0
+        total = 0
+        global best_acc
+
+        # Get the model from the lower problem
+        model = self.lower.module
+
+        # Go through the testing data set for validation
+        for inputs in tqdm(test_dataloader):
+            # input_test_data_format:
+            # {"question": question, "image_path": image_path, "candidates":[...], "true_false":[True, False, ...]}
+            true_false, best_index = select_best_answer(
+                model, tokenizer, inputs, args.aggregation_function
+            )
+            correct += int(true_false)
+            total += 1
+
+        acc = correct / total * 100
+
+        if best_acc < acc:
+            print(f"NEW BEST ACC: {acc}")
+            best_acc = acc
+            self.lower.module.save_pretrained(args.weights_path)
+
+        # Log to wandb
+        wandb.log({"val_acc": acc, "best_acc": best_acc})
+
         torch.cuda.empty_cache()
         torch.cuda.reset_peak_memory_stats()
-        self.lower.module.save_pretrained(args.weights_path)
         return torch.tensor(0.0, device=args.device)
 
 
