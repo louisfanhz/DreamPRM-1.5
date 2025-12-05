@@ -138,7 +138,6 @@ class Upper(ImplicitProblem):
         if len(upper_loss) % 10 == 0:
             print(f"Upper Max weight: {max(self.module.raw_weights)}, Min weight: {min(self.module.raw_weights)}")
         if len(upper_loss) == len(meta_dataloader):
-            print(f"Logging outer_loss, weights stats...")
             mean_outer_loss = np.mean(upper_loss)
             wandb.log({"outer_loss": mean_outer_loss})
             wandb.log({"weight_mean": torch.mean(self.module.raw_weights).item(), "weight_std": torch.std(self.module.raw_weights).item()})
