@@ -327,7 +327,7 @@ class ReweightingEngine(Engine):
             charxiv_correct += int(true_false)
             charxiv_total += 1
         charxiv_acc = charxiv_correct / charxiv_total * 100
-        print(f"ACCURACY CharXiv: {acc}")
+        print(f"ACCURACY CharXiv: {charxiv_acc}")
 
         # Log to wandb
         wandb.log({"val_acc": acc, "best_acc": best_acc, "charxiv_acc": charxiv_acc})
