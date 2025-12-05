@@ -145,7 +145,7 @@ class MyDataset(Dataset):
                 conv_template.append_message(conv_template.roles[1], part['value'])
         prompt = conv_template.get_prompt()
         # image = load_image(inputs['image'], max_num=self.max_patch_num).to(torch.bfloat16).cuda()
-        if inputs['image'].contains("CharXiv"):
+        if "CharXiv" in inputs['image']:
             image_path = "../drive/MyDrive/llm_reasoning/charxiv_images/" + inputs['image'][17:]
         if inputs['image'].startswith("data"):
             image_path = "../drive/MyDrive/llm_reasoning/visual_prm_data/" + inputs['image'][5:]
