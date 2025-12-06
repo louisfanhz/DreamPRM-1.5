@@ -135,7 +135,7 @@ class Upper(ImplicitProblem):
         # print(prediction.item(), label.item(), loss.item())
         # print(max(self.module.raw_weights))
         # print(min(self.module.raw_weights))
-        if len(upper_loss) % 10 == 0:
+        if len(upper_loss) % 100 == 0:
             print(f"Upper Max weight: {max(self.module.raw_weights)}, Min weight: {min(self.module.raw_weights)}")
         if len(upper_loss) == len(meta_dataloader):
             mean_outer_loss = np.mean(upper_loss)

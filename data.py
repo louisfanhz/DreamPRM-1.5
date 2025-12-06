@@ -226,7 +226,7 @@ def build_test_dataloader(
     test_dataset = MyTestDataset(read_json(test_json_file))
     
     if return_subset:
-        size = int(len(test_dataset) * 0.25)
+        size = int(len(test_dataset) * 0.3)
         bigset, smallset = random_split(
             test_dataset,
             [len(test_dataset) - size, size],
