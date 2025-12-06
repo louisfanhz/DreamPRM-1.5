@@ -232,7 +232,7 @@ def build_test_dataloader(
             [len(test_dataset) - size, size],
             generator=torch.Generator().manual_seed(42)
         )
-        test_dataloader = DataLoader(smallset, batch_size=1, shuffle=False)
+        test_dataloader = DataLoader(smallset, batch_size=1, shuffle=True)
         return test_dataloader
 
     test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=True)
