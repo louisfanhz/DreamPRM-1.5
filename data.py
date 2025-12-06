@@ -226,14 +226,14 @@ def build_test_dataloader(
     test_dataset = MyTestDataset(read_json(test_json_file))
     
     if return_subset:
-        size = int(len(test_dataset) * 0.2)
+        size = int(len(test_dataset) * 0.25)
         bigset, smallset = random_split(
             test_dataset,
             [len(test_dataset) - size, size],
-            generator=torch.Generator()#.manual_seed(42)
+            generator=torch.Generator().manual_seed(42)
         )
-        test_dataloader = DataLoader(smallset, batch_size=1, shuffle=True)
+        test_dataloader = DataLoader(smallset, batch_size=1, shuffle=False)
         return test_dataloader
 
-    test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=False)
+    test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=True)
     return test_dataloader
