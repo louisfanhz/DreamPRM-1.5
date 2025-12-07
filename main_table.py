@@ -287,7 +287,11 @@ class ReweightingEngine(Engine):
         print(f"Starting validation...")
         torch.cuda.empty_cache()
         test_mmmu_dataloader = build_test_dataloader(test_json_file="./data/test_MMMU_8cots.json", return_subset=True)
-        test_charxiv_dataloader = build_test_dataloader(test_json_file="./data/test-gemini-3-pro-preview-CharXiv-reasoning-results-dreamprm.json", return_subset=True)
+        test_charxiv_dataloader = build_test_dataloader(
+            test_json_file="./data/test-gemini-3-pro-preview-CharXiv-reasoning-results-dreamprm.json", 
+            return_subset=True,
+            subset_ratio=0.3
+        )
 
         correct = 0
         total = 0
