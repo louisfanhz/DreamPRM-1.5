@@ -22,15 +22,15 @@ cp.checkpoint = partial(cp.checkpoint, use_reentrant=False)
 parser = argparse.ArgumentParser(description="DreamPRM-1.5")
 # data file path and model path
 # parser.add_argument('--train_json_file', type=str, default="./data/train.json")
-parser.add_argument('--train_json_file', type=str, default="./data/train_with_CharXiv.json")
-# parser.add_argument('--train_json_file', type=str, default="./data/training_data_prm_combined.json")
-# parser.add_argument('--meta_json_file', type=str, default="./data/meta.json")
+parser.add_argument('--train_json_file', type=str, default="./data/prm_training_data_chartMuseum_formatted.json")
+# parser.add_argument('--train_json_file', type=str, default="./data/training_data_combined.json")
 parser.add_argument('--meta_json_file', type=str, default="./data/meta_MMMU_Pro.json")
+# parser.add_argument('--meta_json_file', type=str, default="./data/training_data_chartQAPro_.json")
 parser.add_argument('--weights_path', type=str, default="./weights")
 parser.add_argument("--reward_model", type=str, default="OpenGVLab/InternVL3-1B")
 # bi-level optimization configuration
 parser.add_argument("--iteration_num", type=int, default=100001)
-parser.add_argument("--save_every_iterations", type=int, default=1000)
+parser.add_argument("--save_every_iterations", type=int, default=100)
 parser.add_argument("--unroll_steps", type=int, default=1)
 parser.add_argument("--gradiant_accumulation", type=int, default=1)
 parser.add_argument("--gradiant_clipping", type=float, default=1.0)
@@ -42,7 +42,7 @@ parser.add_argument("--baseline", action="store_true")
 parser.add_argument("--seed", type=int, default=1)
 parser.add_argument("--local_rank", type=int, default=0)
 # lower-level optimization hyperparameters
-parser.add_argument("--lr", type=float, default=5e-5)
+parser.add_argument("--lr", type=float, default=3e-5)
 parser.add_argument("--momentum", type=float, default=0.9)
 parser.add_argument("--weight_decay", type=float, default=0.01)
 parser.add_argument("--batch_size", type=int, default=1)
@@ -93,7 +93,6 @@ resume_labels = None
     meta_batch_size= args.batch_size,
     max_patch_num = args.max_patch_num,
 )
-wandb.init(project="DreamPRM-1.5")
 
 device = torch.device(args.device)
 criterion = nn.CrossEntropyLoss()
@@ -103,9 +102,21 @@ lower_loss = []
 upper_loss = []
 best_loss = 1000
 best_acc = 0
-MODEL_PATH = args.reward_model
-WEIGHTS_PATH = "../drive/MyDrive/llm_reasoning/weights/last-cold-start-weights"
+best_charxiv_acc = 0
+# MODEL_PATH = args.reward_model
+MODEL_PATH = "Cooolder/DreamPRM-1_5-InstanceTable"
+# WEIGHTS_PATH = "../drive/MyDrive/llm_reasoning/weights/last-cold-start-weights"
 tokenizer = AutoTokenizer.from_pretrained("OpenGVLab/InternVL3-1B", trust_remote_code=True, use_fast=False)
+
+wandb_config = {
+    "train_file": args.train_json_file,
+    "meta_file": args.meta_json_file,
+    "train_lr": args.lr,
+    "meta_lr": args.meta_lr,
+    "save_every_iters": args.save_every_iterations,
+    "base_model": MODEL_PATH,
+}
+wandb.init(project="DreamPRM-1.5", name="finetune-colab", config=wandb_config)
 
 
 class Upper(ImplicitProblem):
@@ -135,7 +146,7 @@ class Upper(ImplicitProblem):
         # print(prediction.item(), label.item(), loss.item())
         # print(max(self.module.raw_weights))
         # print(min(self.module.raw_weights))
-        if len(upper_loss) % 100 == 0:
+        if len(upper_loss) % 10 == 0:
             print(f"Upper Max weight: {max(self.module.raw_weights)}, Min weight: {min(self.module.raw_weights)}")
         if len(upper_loss) == len(meta_dataloader):
             mean_outer_loss = np.mean(upper_loss)
@@ -235,8 +246,8 @@ class Lower(ImplicitProblem):
 
     def configure_module(self):
         model = AutoModel.from_pretrained(
-            # MODEL_PATH,
-            WEIGHTS_PATH,
+            MODEL_PATH,
+            # WEIGHTS_PATH,
             trust_remote_code=True,
             low_cpu_mem_usage=True,
             torch_dtype=torch.bfloat16,
@@ -286,39 +297,41 @@ class ReweightingEngine(Engine):
     def validation(self):
         print(f"Starting validation...")
         torch.cuda.empty_cache()
-        test_mmmu_dataloader = build_test_dataloader(test_json_file="./data/test_MMMU_8cots.json", return_subset=True)
+        # test_mmmu_dataloader = build_test_dataloader(test_json_file="./data/test_MMMU_8cots.json", return_subset=True, subset_ratio=0.01)
         test_charxiv_dataloader = build_test_dataloader(
-            test_json_file="./data/test-gemini-3-pro-preview-CharXiv-reasoning-results-dreamprm.json", 
+            test_json_file="./data/sanitized-gemini-3-pro-preview-CharXiv-reasoning-results-dreamprm.json", 
             return_subset=True,
-            subset_ratio=0.3
+            subset_ratio=1.0
         )
 
         correct = 0
         total = 0
         global best_acc
+        global best_charxiv_acc
 
         # Get the model from the lower problem
         model = self.lower.module
 
-        # Go through the testing data set for validation
-        for inputs in tqdm(test_mmmu_dataloader, desc="Testing MMMU"):
-            # input_test_data_format:
-            # {"question": question, "image_path": image_path, "candidates":[...], "true_false":[True, False, ...]}
-            true_false, best_index = select_best_answer(
-                model, tokenizer, inputs, args.aggregation_function
-            )
-            correct += int(true_false)
-            total += 1
+        # # Go through the testing data set for validation
+        # for inputs in tqdm(test_mmmu_dataloader, desc="Testing MMMU"):
+        #     # input_test_data_format:
+        #     # {"question": question, "image_path": image_path, "candidates":[...], "true_false":[True, False, ...]}
+        #     true_false, best_index = select_best_answer(
+        #         model, tokenizer, inputs, args.aggregation_function
+        #     )
+        #     correct += int(true_false)
+        #     total += 1
 
-        acc = correct / total * 100
+        # acc = correct / total * 100
 
-        if best_acc < acc:
-            print(f"NEW BEST ACC: {acc}")
-            best_acc = acc
-            self.lower.module.save_pretrained("../drive/MyDrive/llm_reasoning/weights/best-weights")
-        else:
-            self.lower.module.save_pretrained("../drive/MyDrive/llm_reasoning/weights/last-weights")
-        print(f"ACCURACY MMMU: {acc}")
+        # if best_acc < acc:
+        #     print(f"NEW BEST ACC: {acc}")
+        #     best_acc = acc
+        #     # self.lower.module.save_pretrained("../drive/MyDrive/llm_reasoning/weights/best-weights")
+        # else:
+        #     pass
+        #     # self.lower.module.save_pretrained("../drive/MyDrive/llm_reasoning/weights/last-weights")
+        # print(f"ACCURACY MMMU: {acc}")
 
         ### test on CharXiv ###
         charxiv_correct = 0
@@ -331,15 +344,19 @@ class ReweightingEngine(Engine):
             charxiv_correct += int(true_false)
             charxiv_total += 1
         charxiv_acc = charxiv_correct / charxiv_total * 100
+        if best_charxiv_acc < charxiv_acc:
+            print(f"NEW BEST CHARXIV ACC: {charxiv_acc}")
+            best_charxiv_acc = charxiv_acc
+            self.lower.module.save_pretrained("../drive/MyDrive/llm_reasoning/weights/best-charxiv-weights")
         print(f"ACCURACY CharXiv: {charxiv_acc}")
 
         # Log to wandb
-        wandb.log({"val_acc": acc, "best_acc": best_acc, "charxiv_acc": charxiv_acc})
+        # wandb.log({"val_acc": acc, "best_acc": best_acc, "charxiv_acc": charxiv_acc})
+        wandb.log({"best_acc": best_acc, "charxiv_acc": charxiv_acc})
 
         torch.cuda.empty_cache()
         torch.cuda.reset_peak_memory_stats()
         return torch.tensor(0.0, device=args.device)
-
 
 upper_config = Config(type="darts", precision=args.precision, retain_graph=True, gradient_clipping=args.gradiant_clipping)
 lower_config = Config(type="darts", precision=args.precision, unroll_steps=args.unroll_steps, gradient_accumulation=args.gradiant_accumulation, gradient_clipping=args.gradiant_clipping)

@@ -145,9 +145,11 @@ class MyDataset(Dataset):
                 conv_template.append_message(conv_template.roles[1], part['value'])
         prompt = conv_template.get_prompt()
         # image = load_image(inputs['image'], max_num=self.max_patch_num).to(torch.bfloat16).cuda()
-        if "CharXiv" in inputs['image']:
-            image_path = "../drive/MyDrive/llm_reasoning/charxiv_images/" + inputs['image'][17:]
-        if inputs['image'].startswith("data"):
+        if "ChartQAPro" in inputs['image']:
+            image_path = "../drive/MyDrive/llm_reasoning/ChartQAPro_images/" + inputs['image'][18:]
+        elif "ChartMuseum" in inputs['image']:
+            image_path = "../drive/MyDrive/llm_reasoning/ChartMuseum_images/images/" + inputs['image'][19:]
+        elif inputs['image'].startswith("data"):
             image_path = "../drive/MyDrive/llm_reasoning/visual_prm_data/" + inputs['image'][5:]
         image = load_image(image_path, max_num=self.max_patch_num).to(torch.bfloat16).cuda()
         id = str(inputs['id'])
@@ -183,12 +185,14 @@ class MyMetaDataset(Dataset):
             elif part['from'] == 'gpt':
                 conv_template.append_message(conv_template.roles[1], part['value'])
         prompt = conv_template.get_prompt()
-        if inputs['image'].startswith("./"):
-            image = "./data/CharXiv_images" + inputs['image'][8:]
+        if "ChartQAPro" in inputs['image']:
+            image_path = "../drive/MyDrive/llm_reasoning/ChartQAPro_images/" + inputs['image'][18:]
+        elif "ChartMuseum" in inputs['image']:
+            image_path = "../drive/MyDrive/llm_reasoning/ChartMuseum_images/images/" + inputs['image'][19:]
         else:
-            # image = inputs['image'][1:]
-            image = "../drive/MyDrive/llm_reasoning/mmmu_pro_images/standard_4_options/" + inputs['image'][20:]
-        image = load_image(image, max_num=self.max_patch_num).to(torch.bfloat16).cuda()
+            # image_path = inputs['image'][1:]
+            image_path = "../drive/MyDrive/llm_reasoning/mmmu_pro_images/standard_4_options/" + inputs['image'][20:]
+        image = load_image(image_path, max_num=self.max_patch_num).to(torch.bfloat16).cuda()
         label = torch.tensor(inputs["true_false"]).to(torch.bfloat16).cuda()
 
         return prompt, image, label
