@@ -352,7 +352,7 @@ class ReweightingEngine(Engine):
             best_charxiv_acc = charxiv_acc
             self.lower.module.save_pretrained("../drive/MyDrive/llm_reasoning/weights/best-charxiv-weights")
         print(f"ACCURACY CharXiv: {charxiv_acc}")
-        with open(f"../drive/MyDrive/llm_reasoning/eval_infos/latest-Global-Step-{self.global_step}", "w") as f:
+        with open(f"../drive/MyDrive/llm_reasoning/eval_infos/latest-Global-Step-{self.global_step}.json", "w") as f:
             json.dump(infos, f)
 
         # Log to wandb
