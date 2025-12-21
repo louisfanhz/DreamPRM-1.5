@@ -15,6 +15,7 @@ import torch.utils.checkpoint as cp
 from functools import partial
 from transformers import get_cosine_schedule_with_warmup
 from tqdm import tqdm
+import json
 
 cp.checkpoint = partial(cp.checkpoint, use_reentrant=False)
 
@@ -337,18 +338,22 @@ class ReweightingEngine(Engine):
         charxiv_correct = 0
         charxiv_total = 0
         model = self.lower.module
+        infos = []
         for inputs in tqdm(test_charxiv_dataloader, desc="Testing CharXiv"):
-            true_false, best_index = select_best_answer(
+            true_false, best_index, info = select_best_answer(
                 model, tokenizer, inputs, args.aggregation_function
             )
             charxiv_correct += int(true_false)
             charxiv_total += 1
+            infos.append(info)
         charxiv_acc = charxiv_correct / charxiv_total * 100
         if best_charxiv_acc < charxiv_acc:
             print(f"NEW BEST CHARXIV ACC: {charxiv_acc}")
             best_charxiv_acc = charxiv_acc
             self.lower.module.save_pretrained("../drive/MyDrive/llm_reasoning/weights/best-charxiv-weights")
         print(f"ACCURACY CharXiv: {charxiv_acc}")
+        with open(f"../drive/MyDrive/llm_reasoning/eval_infos/latest-Global-Step-{self.global_step}", "w") as f:
+            json.dump(infos, f)
 
         # Log to wandb
         # wandb.log({"val_acc": acc, "best_acc": best_acc, "charxiv_acc": charxiv_acc})

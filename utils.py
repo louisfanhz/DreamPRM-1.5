@@ -878,6 +878,10 @@ def select_best_answer(model, tokenizer, inputs, agg_fuc):
     max_score = 0
     true_false = False
     best_index = 0
+    info = {
+        "id": inputs["id"]
+        "prm_scores": [],
+    }
     for i in inputs['candidates']:
         m_reason = re.search(r"\[Reasoning\](.*?)(?=\n?Answer:)", i[0], re.S)
         reasoning = m_reason.group(1) if m_reason else i[0]
@@ -912,7 +916,9 @@ def select_best_answer(model, tokenizer, inputs, agg_fuc):
             true_false = inputs['true_false'][index]
             best_index = index
         index += 1
-    return true_false, best_index
+        info["prm_scores"].append(score)
+        
+    return true_false, best_index, info
 
 
 def generate_scores(model, tokenizer, inputs, agg_fuc):
