@@ -879,7 +879,7 @@ def select_best_answer(model, tokenizer, inputs, agg_fuc):
     true_false = False
     best_index = 0
     info = {
-        "id": inputs["id"]
+        "id": inputs["id"],
         "prm_scores": [],
     }
     for i in inputs['candidates']:
