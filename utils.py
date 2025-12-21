@@ -916,7 +916,7 @@ def select_best_answer(model, tokenizer, inputs, agg_fuc):
             true_false = inputs['true_false'][index]
             best_index = index
         index += 1
-        info["prm_scores"].append(score)
+        info["prm_scores"].append(score.item())
         
     return true_false, best_index, info
 
