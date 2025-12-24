@@ -881,6 +881,7 @@ def select_best_answer(model, tokenizer, inputs, agg_fuc):
     info = {
         "id": inputs["id"],
         "prm_scores": [],
+        "true_false": [],
     }
     for i in inputs['candidates']:
         m_reason = re.search(r"\[Reasoning\](.*?)(?=\n?Answer:)", i[0], re.S)
@@ -918,6 +919,7 @@ def select_best_answer(model, tokenizer, inputs, agg_fuc):
             info["prm_correct"] = true_false.item()
         index += 1
         info["prm_scores"].append(score.item())
+        info["true_false"].append(true_false.item())
         
     return true_false, best_index, info
 
