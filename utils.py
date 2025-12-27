@@ -914,12 +914,12 @@ def select_best_answer(model, tokenizer, inputs, agg_fuc):
         score = aggregate_score(probs, target, func=agg_fuc)
         if score >= max_score:
             max_score = score
-            true_false = inputs['true_false'][index]
+            true_false = inputs['true_false'][index].item()
             best_index = index
-            info["prm_correct"] = true_false.item()
+            info["prm_correct"] = true_false
         index += 1
         info["prm_scores"].append(score.item())
-        info["true_false"].append(true_false.item())
+        info["true_false"].append(true_false)
         
     return true_false, best_index, info
 
