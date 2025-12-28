@@ -300,7 +300,7 @@ class ReweightingEngine(Engine):
         torch.cuda.empty_cache()
         # test_mmmu_dataloader = build_test_dataloader(test_json_file="./data/test_MMMU_8cots.json", return_subset=True, subset_ratio=0.01)
         test_charxiv_dataloader = build_test_dataloader(
-            test_json_file="./data/sanitized-gemini-3-pro-preview-CharXiv-reasoning-results-dreamprm.json", 
+            test_json_file="./data/sanitized-gemini-3-pro-preview-CharXiv-reasoning-results-dreamprm-non-unanimous.json", 
             return_subset=True,
             subset_ratio=1.0
         )
