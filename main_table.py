@@ -345,7 +345,11 @@ class ReweightingEngine(Engine):
             )
             charxiv_correct += int(true_false)
             charxiv_total += 1
-            infos.append(info)
+            # only interested in cases where the answers are not unanimous
+            if all(inputs['true_false']) or all([not tf for tf in inputs['true_false']]):
+                pass
+            else:
+                infos.append(info)
         charxiv_acc = charxiv_correct / charxiv_total * 100
         if best_charxiv_acc < charxiv_acc:
             print(f"NEW BEST CHARXIV ACC: {charxiv_acc}")
